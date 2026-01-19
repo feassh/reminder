@@ -1,5 +1,58 @@
 # Reminder System - 部署指南
 
+## 系统设计说明
+
+### 1.1 架构概述
+
+```text
+┌─────────────┐
+│   客户端    │ (Mobile/Web)
+└──────┬──────┘
+       │ REST API (HTTPS)
+       ▼
+┌─────────────────────────────────┐
+│   Cloudflare Worker (fetch)     │
+│  ┌──────────────────────────┐  │
+│  │  API Router & Controllers │  │
+│  └────────┬─────────────────┘  │
+│           │                      │
+│  ┌────────▼─────────────────┐  │
+│  │  Service Layer            │  │
+│  │  - Schedule Calculator    │  │
+│  │  - Lunar Converter        │  │
+│  │  - Validator              │  │
+│  └────────┬─────────────────┘  │
+│           │                      │
+│  ┌────────▼─────────────────┐  │
+│  │   D1 Database (SQLite)    │  │
+│  └──────────────────────────┘  │
+└─────────────────────────────────┘
+       ▲
+       │ Cron Trigger (every minute)
+       │
+┌──────┴──────────────────────────┐
+│  Cloudflare Worker (scheduled)  │
+│  - Query due reminders           │
+│  - Send Telegram notifications   │
+│  - Update next_trigger_at        │
+└──────────────────────────────────┘
+```
+
+### 1.2 核心设计决策
+
+- 时区处理: 所有时间在数据库中存储为 UTC Unix 秒，客户端可指定 IANA 时区
+- 农历算法: 实现简化版农历转公历算法（支持 2000-2100 年），基于预计算农历数据
+- 并发控制: 使用乐观锁（version 字段）防止 Cron 重复触发
+- 幂等性: 支持 Idempotency-Key 防止重复创建
+- 扩展性: schedule_config 使用 JSON 存储，便于扩展新类型
+
+### 1.3 限制与权衡
+
+- 农历算法采用预计算数据表（2000-2100），不支持更早/更晚年份
+- 闰月处理：默认闰月与正常月份同等对待，可通过 `leapMonth: true` 精确指定
+- Cron 最小粒度 1 分钟，精确度 ±30 秒
+- 单次 Cron 处理最多 50 条提醒（防止超时）
+
 ## 前置要求
 
 - Node.js 18+
