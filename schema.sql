@@ -21,7 +21,7 @@ CREATE TABLE IF NOT EXISTS reminders (
 										 schedule_config TEXT NOT NULL,  -- JSON string
 										 next_trigger_at INTEGER NOT NULL, -- unix seconds (UTC)
 										 status TEXT NOT NULL DEFAULT 'active', -- 'active' | 'completed' | 'paused'
-										 timezone TEXT NOT NULL DEFAULT 'Asia/Singapore', -- IANA timezone
+										 timezone TEXT NOT NULL DEFAULT 'Asia/Shanghai', -- IANA timezone
 										 version INTEGER NOT NULL DEFAULT 0, -- 乐观锁版本号
 										 attempts INTEGER NOT NULL DEFAULT 0, -- 发送尝试次数
 										 last_error TEXT NULL,           -- 最后一次错误信息
@@ -55,7 +55,3 @@ CREATE TABLE IF NOT EXISTS webhooks (
 										created_at INTEGER NOT NULL,
 										FOREIGN KEY (user_id) REFERENCES users(user_id)
 	);
-
--- 初始化一个测试用户
-INSERT OR IGNORE INTO users (user_id, api_token, created_at)
-VALUES ('test_user', 'test_token_12345', unixepoch());

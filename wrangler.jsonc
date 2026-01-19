@@ -9,7 +9,14 @@
 	"compatibility_date": "2025-09-27",
 	"observability": {
 		"enabled": true
-	}
+	},
+	"d1_databases": [
+		{
+			"binding": "reminder_db",
+			"database_name": "reminder_db",
+			"database_id": "ede13b80-dc0e-4243-95ef-e4bc8fe3e538"
+		}
+	]
 	/**
 	 * Smart Placement
 	 * https://developers.cloudflare.com/workers/configuration/smart-placement/#smart-placement

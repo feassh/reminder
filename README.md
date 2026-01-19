@@ -56,19 +56,34 @@ wrangler d1 create reminder_db
 # 复制 database_id 到 wrangler.toml
 ```
 
-**重要**：将输出的 `database_id` 填入 `wrangler.toml` 文件中。
+**重要**：将输出的 `database_id` 填入 `wrangler.toml` 文件中（最新 cli 工具会自动填写到 `wrangler.toml` 文件中）。
 
 ## 5. 初始化数据库 Schema
 
 ```bash
-# 执行 schema.sql
+# 执行 schema.sql (在本地执行)
 wrangler d1 execute reminder_db --file=./schema.sql
+# 在远程执行
+wrangler d1 execute reminder_db --remote --file=./schema.sql
 
-# 验证表创建
+# 验证表创建 (在本地执行)
 wrangler d1 execute reminder_db --command="SELECT name FROM sqlite_master WHERE type='table';"
+# 在远程执行
+wrangler d1 execute reminder_db --remote --command="SELECT name FROM sqlite_master WHERE type='table';"
 ```
 
-## 6. 设置 Secrets
+## 6. 部署 Worker
+
+```bash
+# 部署到 Cloudflare
+wrangler deploy
+
+# 输出示例：
+# ✅ Deployment complete
+# https://reminder.your-subdomain.workers.dev
+```
+
+## 7. 设置 Secrets
 
 ```bash
 # 设置 Telegram Bot Token
@@ -80,29 +95,18 @@ wrangler secret put WEBHOOK_SECRET
 # 输入一个随机字符串
 ```
 
-## 7. 部署 Worker
-
-```bash
-# 部署到 Cloudflare
-wrangler deploy
-
-# 输出示例：
-# ✅ Deployment complete
-# https://reminder.your-subdomain.workers.dev
-```
-
 ## 8. 创建测试用户
 
 ```bash
 # 创建一个测试用户
 wrangler d1 execute reminder_db --command="
-INSERT INTO users (user_id, api_token, created_at)
+INSERT OR IGNORE INTO users (user_id, api_token, created_at)
 VALUES ('my_user', 'my_secret_token_abc123', unixepoch());
 "
 
 # 或者使用更安全的随机 token
 wrangler d1 execute reminder_db --command="
-INSERT INTO users (user_id, api_token, created_at)
+INSERT OR IGNORE INTO users (user_id, api_token, created_at)
 VALUES ('my_user', '$(openssl rand -hex 32)', unixepoch());
 "
 ```
