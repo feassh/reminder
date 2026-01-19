@@ -18,6 +18,8 @@ export function calculateNextTrigger(scheduleType, config, timezone = 'Asia/Shan
 			return calculateDaily(config, timezone, now);
 		case 'weekly':
 			return calculateWeekly(config, timezone, now);
+		case 'monthly':
+			return calculateMonthly(config, timezone, now);
 		case 'lunar':
 			return calculateLunar(config, timezone, now);
 		default:
@@ -142,10 +144,56 @@ function calculateWeekly(config, timezone, fromTime) {
 }
 
 /**
+ * 每月提醒
+ */
+function calculateMonthly(config, timezone, fromTime) {
+	const { time, day_of_month, every_n_months = 1, end_date } = config;
+
+	if (!time || !day_of_month) {
+		throw new Error('monthly schedule requires "time" and "day_of_month"');
+	}
+
+	if (day_of_month < 1 || day_of_month > 31) {
+		throw new Error('day_of_month must be between 1 and 31');
+	}
+
+	const { hours, minutes } = parseTime(time);
+	const tzOffset = getTimezoneOffset(timezone);
+
+	// 从当前时间开始
+	let current = new Date((fromTime + tzOffset) * 1000);
+	current.setUTCDate(day_of_month);
+	current.setUTCHours(hours, minutes, 0, 0);
+
+	let triggerTime = Math.floor(current.getTime() / 1000) - tzOffset;
+
+	// 如果这个月的日期已过，推到下个月
+	if (triggerTime <= fromTime) {
+		current.setUTCMonth(current.getUTCMonth() + every_n_months);
+		// 处理月份日期不存在的情况（如2月30日）
+		if (current.getUTCDate() !== day_of_month) {
+			// 设置为该月最后一天
+			current.setUTCDate(0);
+		}
+		triggerTime = Math.floor(current.getTime() / 1000) - tzOffset;
+	}
+
+	// 检查结束日期
+	if (end_date) {
+		const endTimestamp = Math.floor(new Date(end_date).getTime() / 1000);
+		if (triggerTime > endTimestamp) {
+			return null;
+		}
+	}
+
+	return triggerTime;
+}
+
+/**
  * 农历提醒
  */
 function calculateLunar(config, timezone, fromTime) {
-	const { lunarMonth, lunarDay, time, leapMonth = false } = config;
+	const { lunarMonth, lunarDay, time, leapMonth = false, repeat = true } = config;
 
 	if (!lunarMonth || !lunarDay || !time) {
 		throw new Error('lunar schedule requires "lunarMonth", "lunarDay", and "time"');
@@ -167,6 +215,11 @@ function calculateLunar(config, timezone, fromTime) {
 
 	const triggerTime = Math.floor(triggerDate.getTime() / 1000) - tzOffset;
 
+	// 如果是一次性提醒且时间已过，返回 null
+	if (!repeat && triggerTime <= fromTime) {
+		return null;
+	}
+
 	return triggerTime > fromTime ? triggerTime : null;
 }
 
@@ -179,6 +232,18 @@ export function generatePreview(scheduleType, config, timezone, count = 3) {
 
 	// 对于 once 类型，只有一次
 	if (scheduleType === 'once') {
+		const triggerTime = calculateNextTrigger(scheduleType, config, timezone);
+		if (triggerTime) {
+			preview.push({
+				unix: triggerTime,
+				iso: unixToISO(triggerTime),
+			});
+		}
+		return preview;
+	}
+
+	// 对于农历一次性提醒，只有一次
+	if (scheduleType === 'lunar' && config.repeat === false) {
 		const triggerTime = calculateNextTrigger(scheduleType, config, timezone);
 		if (triggerTime) {
 			preview.push({
@@ -223,6 +288,8 @@ export function calculateNextOccurrence(scheduleType, config, timezone, lastTrig
 			return calculateDaily(config, timezone, fromTime);
 		case 'weekly':
 			return calculateWeekly(config, timezone, fromTime);
+		case 'monthly':
+			return calculateMonthly(config, timezone, fromTime);
 		case 'lunar':
 			return calculateLunar(config, timezone, fromTime);
 		default:

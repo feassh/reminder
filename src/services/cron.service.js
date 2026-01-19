@@ -91,34 +91,34 @@ async function handleSuccessfulTrigger(db, reminder, currentTime) {
 	const { id, schedule_type, schedule_config, timezone } = reminder;
 	const config = JSON.parse(schedule_config);
 
-	if (schedule_type === 'once') {
-		// 一次性提醒，标记为完成
+	// 一次性提醒或农历一次性提醒
+	if (schedule_type === 'once' || (schedule_type === 'lunar' && config.repeat === false)) {
 		await db.prepare(`
-      UPDATE reminders
-      SET status = 'completed', updated_at = ?, attempts = 0, last_error = NULL
-      WHERE id = ?
-    `).bind(currentTime, id).run();
+			UPDATE reminders
+			SET status = 'completed', updated_at = ?, attempts = 0, last_error = NULL
+			WHERE id = ?
+		`).bind(currentTime, id).run();
 
-		console.log(`Reminder ${id} completed (once)`);
+		console.log(`Reminder ${id} completed (${schedule_type})`);
 	} else {
 		// 重复提醒，计算下次触发时间
 		const nextTrigger = calculateNextOccurrence(schedule_type, config, timezone, currentTime);
 
 		if (nextTrigger && nextTrigger > 0) {
 			await db.prepare(`
-        UPDATE reminders
-        SET next_trigger_at = ?, updated_at = ?, attempts = 0, last_error = NULL
-        WHERE id = ?
-      `).bind(nextTrigger, currentTime, id).run();
+				UPDATE reminders
+				SET next_trigger_at = ?, updated_at = ?, attempts = 0, last_error = NULL
+				WHERE id = ?
+			`).bind(nextTrigger, currentTime, id).run();
 
 			console.log(`Reminder ${id} next trigger: ${nextTrigger}`);
 		} else {
 			// 没有下次触发（可能超过 end_date）
 			await db.prepare(`
-        UPDATE reminders
-        SET status = 'completed', updated_at = ?
-        WHERE id = ?
-      `).bind(currentTime, id).run();
+				UPDATE reminders
+				SET status = 'completed', updated_at = ?
+				WHERE id = ?
+			`).bind(currentTime, id).run();
 
 			console.log(`Reminder ${id} completed (no more occurrences)`);
 		}

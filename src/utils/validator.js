@@ -14,8 +14,8 @@ export function validateReminderInput(data) {
 		errors.push('content must be less than 1000 characters');
 	}
 
-	if (!data.schedule_type || !['once', 'daily', 'weekly', 'lunar'].includes(data.schedule_type)) {
-		errors.push('schedule_type must be one of: once, daily, weekly, lunar');
+	if (!data.schedule_type || !['once', 'daily', 'weekly', 'monthly', 'lunar'].includes(data.schedule_type)) {
+		errors.push('schedule_type must be one of: once, daily, weekly, monthly, lunar');
 	}
 
 	if (!data.schedule_config || typeof data.schedule_config !== 'object') {
@@ -57,8 +57,8 @@ export function validateUpdateInput(data) {
 	}
 
 	if (data.schedule_type !== undefined) {
-		if (!['once', 'daily', 'weekly', 'lunar'].includes(data.schedule_type)) {
-			errors.push('schedule_type must be one of: once, daily, weekly, lunar');
+		if (!['once', 'daily', 'weekly', 'monthly', 'lunar'].includes(data.schedule_type)) {
+			errors.push('schedule_type must be one of: once, daily, weekly, monthly, lunar');
 		}
 	}
 
@@ -135,6 +135,21 @@ function validateScheduleConfig(type, config) {
 			}
 			break;
 
+		case 'monthly':
+			if (!config.time || !isValidTime(config.time)) {
+				errors.push('monthly schedule requires "time" in HH:MM format');
+			}
+			if (!config.day_of_month || !Number.isInteger(config.day_of_month) || config.day_of_month < 1 || config.day_of_month > 31) {
+				errors.push('monthly schedule requires "day_of_month" (1-31)');
+			}
+			if (config.every_n_months !== undefined && (!Number.isInteger(config.every_n_months) || config.every_n_months < 1)) {
+				errors.push('every_n_months must be a positive integer');
+			}
+			if (config.end_date && !isValidDate(config.end_date)) {
+				errors.push('end_date must be a valid ISO date (YYYY-MM-DD)');
+			}
+			break;
+
 		case 'lunar':
 			if (!config.lunarMonth || !Number.isInteger(config.lunarMonth) || config.lunarMonth < 1 || config.lunarMonth > 12) {
 				errors.push('lunar schedule requires "lunarMonth" (1-12)');
@@ -144,6 +159,9 @@ function validateScheduleConfig(type, config) {
 			}
 			if (!config.time || !isValidTime(config.time)) {
 				errors.push('lunar schedule requires "time" in HH:MM format');
+			}
+			if (config.repeat !== undefined && typeof config.repeat !== 'boolean') {
+				errors.push('repeat must be a boolean');
 			}
 			break;
 
