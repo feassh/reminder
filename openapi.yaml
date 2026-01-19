@@ -1,0 +1,531 @@
+# openapi.yaml
+openapi: 3.0.3
+info:
+    title: Reminder System API
+    description: |
+        Cloudflare Workers 定时备忘录 / 提醒系统
+        支持一次性、daily、weekly、农历重复提醒
+    version: 1.0.0
+    contact:
+        name: API Support
+        email: support@example.com
+
+servers:
+    - url: https://reminder.example.workers.dev/api
+      description: Production server
+
+security:
+    - BearerAuth: []
+
+components:
+    securitySchemes:
+        BearerAuth:
+            type: http
+            scheme: bearer
+            bearerFormat: token
+
+    schemas:
+        Error:
+            type: object
+            required:
+                - success
+                - error
+            properties:
+                success:
+                    type: boolean
+                    example: false
+                error:
+                    type: object
+                    required:
+                        - code
+                        - message
+                    properties:
+                        code:
+                            type: string
+                            example: BAD_REQUEST
+                        message:
+                            type: string
+                            example: Invalid input parameters
+                        details:
+                            type: object
+
+        SuccessResponse:
+            type: object
+            required:
+                - success
+                - data
+            properties:
+                success:
+                    type: boolean
+                    example: true
+                data:
+                    type: object
+
+        ScheduleConfigOnce:
+            type: object
+            properties:
+                at:
+                    type: string
+                    format: date-time
+                    example: "2026-01-02T09:30:00+08:00"
+                at_unix:
+                    type: integer
+                    example: 1735786200
+
+        ScheduleConfigDaily:
+            type: object
+            required:
+                - time
+            properties:
+                time:
+                    type: string
+                    pattern: '^([0-1]?[0-9]|2[0-3]):([0-5][0-9])$'
+                    example: "09:30"
+                every_n_days:
+                    type: integer
+                    minimum: 1
+                    default: 1
+                end_date:
+                    type: string
+                    format: date
+                    example: "2026-12-31"
+
+        ScheduleConfigWeekly:
+            type: object
+            required:
+                - time
+                - weekdays
+            properties:
+                time:
+                    type: string
+                    pattern: '^([0-1]?[0-9]|2[0-3]):([0-5][0-9])$'
+                    example: "09:30"
+                weekdays:
+                    type: array
+                    items:
+                        type: integer
+                        minimum: 0
+                        maximum: 6
+                    example: [1, 3, 5]
+                    description: 0=Sunday, 1=Monday, ..., 6=Saturday
+                every_n_weeks:
+                    type: integer
+                    minimum: 1
+                    default: 1
+                end_date:
+                    type: string
+                    format: date
+
+        ScheduleConfigLunar:
+            type: object
+            required:
+                - lunarMonth
+                - lunarDay
+                - time
+            properties:
+                lunarMonth:
+                    type: integer
+                    minimum: 1
+                    maximum: 12
+                    example: 8
+                lunarDay:
+                    type: integer
+                    minimum: 1
+                    maximum: 30
+                    example: 15
+                time:
+                    type: string
+                    pattern: '^([0-1]?[0-9]|2[0-3]):([0-5][0-9])$'
+                    example: "20:00"
+                leapMonth:
+                    type: boolean
+                    default: false
+
+        ReminderInput:
+            type: object
+            required:
+                - content
+                - schedule_type
+                - schedule_config
+            properties:
+                content:
+                    type: string
+                    maxLength: 1000
+                    example: "给妈妈打电话"
+                chat_id:
+                    type: string
+                    example: "123456789"
+                    description: Telegram Chat ID
+                schedule_type:
+                    type: string
+                    enum: [once, daily, weekly, lunar]
+                    example: weekly
+                schedule_config:
+                    oneOf:
+                        - $ref: '#/components/schemas/ScheduleConfigOnce'
+                        - $ref: '#/components/schemas/ScheduleConfigDaily'
+                        - $ref: '#/components/schemas/ScheduleConfigWeekly'
+                        - $ref: '#/components/schemas/ScheduleConfigLunar'
+                timezone:
+                    type: string
+                    default: Asia/Singapore
+                    example: Asia/Shanghai
+                preview:
+                    type: integer
+                    minimum: 1
+                    maximum: 10
+                    example: 3
+                    description: Number of next trigger times to preview
+
+        ReminderResponse:
+            type: object
+            properties:
+                id:
+                    type: integer
+                    example: 123
+                content:
+                    type: string
+                chat_id:
+                    type: string
+                schedule_type:
+                    type: string
+                schedule_config:
+                    type: object
+                next_trigger_at:
+                    type: integer
+                    description: Unix timestamp (seconds)
+                next_trigger_at_iso:
+                    type: string
+                    format: date-time
+                status:
+                    type: string
+                    enum: [active, paused, completed]
+                timezone:
+                    type: string
+                attempts:
+                    type: integer
+                last_error:
+                    type: string
+                last_triggered_at:
+                    type: integer
+                created_at:
+                    type: integer
+                updated_at:
+                    type: integer
+
+        PreviewItem:
+            type: object
+            properties:
+                unix:
+                    type: integer
+                    example: 1735786200
+                iso:
+                    type: string
+                    format: date-time
+                    example: "2026-01-02T09:30:00.000Z"
+
+paths:
+    /reminders:
+        post:
+            summary: Create a reminder
+            tags:
+                - Reminders
+            requestBody:
+                required: true
+                content:
+                    application/json:
+                        schema:
+                            $ref: '#/components/schemas/ReminderInput'
+                        examples:
+                            weekly:
+                                value:
+                                    content: "给妈妈打电话"
+                                    chat_id: "123456789"
+                                    schedule_type: weekly
+                                    schedule_config:
+                                        weekdays: [0, 6]
+                                        time: "20:00"
+                                    timezone: Asia/Singapore
+                                    preview: 3
+                            daily:
+                                value:
+                                    content: "喝水提醒"
+                                    schedule_type: daily
+                                    schedule_config:
+                                        time: "09:00"
+                                        every_n_days: 1
+                            lunar:
+                                value:
+                                    content: "中秋节"
+                                    schedule_type: lunar
+                                    schedule_config:
+                                        lunarMonth: 8
+                                        lunarDay: 15
+                                        time: "20:00"
+            parameters:
+                - in: header
+                  name: Idempotency-Key
+                  schema:
+                      type: string
+                  description: Optional idempotency key
+            responses:
+                '201':
+                    description: Reminder created successfully
+                    content:
+                        application/json:
+                            schema:
+                                allOf:
+                                    - $ref: '#/components/schemas/SuccessResponse'
+                                    - properties:
+                                          data:
+                                              type: object
+                                              properties:
+                                                  id:
+                                                      type: integer
+                                                  next_trigger_at:
+                                                      type: integer
+                                                  next_trigger_at_iso:
+                                                      type: string
+                                                  preview:
+                                                      type: array
+                                                      items:
+                                                          $ref: '#/components/schemas/PreviewItem'
+                '400':
+                    description: Bad request
+                    content:
+                        application/json:
+                            schema:
+                                $ref: '#/components/schemas/Error'
+                '401':
+                    description: Unauthorized
+                    content:
+                        application/json:
+                            schema:
+                                $ref: '#/components/schemas/Error'
+
+        get:
+            summary: List reminders
+            tags:
+                - Reminders
+            parameters:
+                - in: query
+                  name: status
+                  schema:
+                      type: string
+                      enum: [active, paused, completed]
+                      default: active
+                - in: query
+                  name: limit
+                  schema:
+                      type: integer
+                      minimum: 1
+                      maximum: 100
+                      default: 20
+                - in: query
+                  name: page
+                  schema:
+                      type: integer
+                      minimum: 1
+                      default: 1
+            responses:
+                '200':
+                    description: List of reminders
+                    content:
+                        application/json:
+                            schema:
+                                allOf:
+                                    - $ref: '#/components/schemas/SuccessResponse'
+                                    - properties:
+                                          data:
+                                              type: object
+                                              properties:
+                                                  items:
+                                                      type: array
+                                                      items:
+                                                          $ref: '#/components/schemas/ReminderResponse'
+                                                  meta:
+                                                      type: object
+                                                      properties:
+                                                          page:
+                                                              type: integer
+                                                          limit:
+                                                              type: integer
+                                                          total:
+                                                              type: integer
+                                                          total_pages:
+                                                              type: integer
+
+    /reminders/{id}:
+        get:
+            summary: Get a reminder
+            tags:
+                - Reminders
+            parameters:
+                - in: path
+                  name: id
+                  required: true
+                  schema:
+                      type: integer
+            responses:
+                '200':
+                    description: Reminder details
+                    content:
+                        application/json:
+                            schema:
+                                allOf:
+                                    - $ref: '#/components/schemas/SuccessResponse'
+                                    - properties:
+                                          data:
+                                              $ref: '#/components/schemas/ReminderResponse'
+                '404':
+                    description: Reminder not found
+                    content:
+                        application/json:
+                            schema:
+                                $ref: '#/components/schemas/Error'
+
+        put:
+            summary: Update a reminder
+            tags:
+                - Reminders
+            parameters:
+                - in: path
+                  name: id
+                  required: true
+                  schema:
+                      type: integer
+            requestBody:
+                required: true
+                content:
+                    application/json:
+                        schema:
+                            type: object
+                            properties:
+                                content:
+                                    type: string
+                                chat_id:
+                                    type: string
+                                schedule_type:
+                                    type: string
+                                    enum: [once, daily, weekly, lunar]
+                                schedule_config:
+                                    type: object
+                                timezone:
+                                    type: string
+                                status:
+                                    type: string
+                                    enum: [active, paused, completed]
+                                preview:
+                                    type: integer
+            responses:
+                '200':
+                    description: Reminder updated
+                    content:
+                        application/json:
+                            schema:
+                                $ref: '#/components/schemas/SuccessResponse'
+                '404':
+                    description: Reminder not found
+
+        delete:
+            summary: Delete a reminder
+            tags:
+                - Reminders
+            parameters:
+                - in: path
+                  name: id
+                  required: true
+                  schema:
+                      type: integer
+            responses:
+                '200':
+                    description: Reminder deleted
+                    content:
+                        application/json:
+                            schema:
+                                allOf:
+                                    - $ref: '#/components/schemas/SuccessResponse'
+                                    - properties:
+                                          data:
+                                              type: object
+                                              properties:
+                                                  deleted:
+                                                      type: boolean
+                '404':
+                    description: Reminder not found
+
+    /reminders/{id}/test-trigger:
+        post:
+            summary: Test trigger a reminder
+            tags:
+                - Reminders
+            parameters:
+                - in: path
+                  name: id
+                  required: true
+                  schema:
+                      type: integer
+            responses:
+                '200':
+                    description: Test result
+                    content:
+                        application/json:
+                            schema:
+                                allOf:
+                                    - $ref: '#/components/schemas/SuccessResponse'
+                                    - properties:
+                                          data:
+                                              type: object
+                                              properties:
+                                                  reminder_id:
+                                                      type: integer
+                                                  test_result:
+                                                      type: object
+                                                      properties:
+                                                          success:
+                                                              type: boolean
+                                                          error:
+                                                              type: string
+
+    /reminders/bulk:
+        post:
+            summary: Bulk create reminders
+            tags:
+                - Reminders
+            requestBody:
+                required: true
+                content:
+                    application/json:
+                        schema:
+                            type: object
+                            required:
+                                - reminders
+                            properties:
+                                reminders:
+                                    type: array
+                                    maxItems: 50
+                                    items:
+                                        $ref: '#/components/schemas/ReminderInput'
+            responses:
+                '200':
+                    description: Bulk creation results
+                    content:
+                        application/json:
+                            schema:
+                                allOf:
+                                    - $ref: '#/components/schemas/SuccessResponse'
+                                    - properties:
+                                          data:
+                                              type: object
+                                              properties:
+                                                  results:
+                                                      type: array
+                                                      items:
+                                                          type: object
+                                                          properties:
+                                                              success:
+                                                                  type: boolean
+                                                              id:
+                                                                  type: integer
+                                                              error:
+                                                                  type: string
