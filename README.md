@@ -11,7 +11,7 @@
 
 ```bash
 # 初始化项目目录
-mkdir reminder-system && cd reminder-system
+mkdir reminder && cd reminder
 
 # 复制所有源码文件到对应目录
 # 目录结构：
@@ -88,7 +88,7 @@ wrangler deploy
 
 # 输出示例：
 # ✅ Deployment complete
-# https://reminder-system.your-subdomain.workers.dev
+# https://reminder.your-subdomain.workers.dev
 ```
 
 ## 8. 创建测试用户
@@ -113,17 +113,17 @@ VALUES ('my_user', '$(openssl rand -hex 32)', unixepoch());
 
 ```bash
 # 健康检查
-curl https://reminder-system.your-subdomain.workers.dev/health
+curl https://reminder.your-subdomain.workers.dev/health
 
 # 应返回：
-# {"success":true,"data":{"status":"healthy","service":"reminder-system"}}
+# {"success":true,"data":{"status":"healthy","service":"reminder"}}
 ```
 
 ## 10. 测试 API
 
 ```bash
 # 创建一个提醒
-curl -X POST https://reminder-system.your-subdomain.workers.dev/api/reminders \
+curl -X POST https://reminder.your-subdomain.workers.dev/api/reminders \
 	-H "Authorization: Bearer my_secret_token_abc123" \
 	-H "Content-Type: application/json" \
 	-d '{
@@ -272,7 +272,7 @@ wrangler dev --test-scheduled
 #!/bin/bash
 
 # 配置
-API_URL="https://reminder-system.your-subdomain.workers.dev/api"
+API_URL="https://reminder.your-subdomain.workers.dev/api"
 API_TOKEN="your_api_token_here"
 
 # 1. 创建每日提醒
@@ -466,7 +466,7 @@ class ReminderClient {
 // 使用示例
 (async () => {
   const client = new ReminderClient(
-    'https://reminder-system.your-subdomain.workers.dev/api',
+    'https://reminder.your-subdomain.workers.dev/api',
     'your_api_token'
   );
 
@@ -618,7 +618,7 @@ class ReminderClient {
 // 使用示例
 void main() async {
   final client = ReminderClient(
-    'https://reminder-system.your-subdomain.workers.dev/api',
+    'https://reminder.your-subdomain.workers.dev/api',
     'your_api_token',
   );
 
@@ -748,7 +748,7 @@ const ReminderScreen: React.FC = () => {
   const [loading, setLoading] = useState(false);
 
   const api = new ReminderAPI(
-    'https://reminder-system.your-subdomain.workers.dev/api',
+    'https://reminder.your-subdomain.workers.dev/api',
     'your_api_token'
   );
 
