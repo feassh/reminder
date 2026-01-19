@@ -266,6 +266,10 @@ A:
 - 客户端传入 IANA 时区
 - 检查 `src/utils/time.js` 中的时区映射
 
+### Q: workers 无法访问 D1 数据库？
+
+A: 检查 `wrangler.jsonc` 中的 `d1_databases` 的 `binding` 值是否为 `DB`
+
 ## 性能优化
 
 ### 1. 添加数据库索引（已在 schema.sql 中）
