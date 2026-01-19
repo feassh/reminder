@@ -13,7 +13,7 @@ describe('Validator - Reminder Input', () => {
 				time: '09:30',
 				every_n_days: 1
 			},
-			timezone: 'Asia/Singapore'
+			timezone: 'Asia/Shanghai'
 		};
 		const result = validateReminderInput(input);
 		expect(result.valid).toBe(true);

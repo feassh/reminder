@@ -168,7 +168,7 @@ components:
                         - $ref: '#/components/schemas/ScheduleConfigLunar'
                 timezone:
                     type: string
-                    default: Asia/Singapore
+                    default: Asia/Shanghai
                     example: Asia/Shanghai
                 preview:
                     type: integer
@@ -245,7 +245,7 @@ paths:
                                     schedule_config:
                                         weekdays: [0, 6]
                                         time: "20:00"
-                                    timezone: Asia/Singapore
+                                    timezone: Asia/Shanghai
                                     preview: 3
                             daily:
                                 value:

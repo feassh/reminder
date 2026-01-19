@@ -190,7 +190,7 @@ curl -X POST https://reminder.your-subdomain.workers.dev/api/reminders \
 		"schedule_config": {
 		"time": "09:00"
 		},
-		"timezone": "Asia/Singapore",
+		"timezone": "Asia/Shanghai",
 		"preview": 3
 	}'
 ```
@@ -350,7 +350,7 @@ curl -X POST "$API_URL/reminders" \
       "time": "09:00",
       "every_n_days": 1
     },
-    "timezone": "Asia/Singapore",
+    "timezone": "Asia/Shanghai",
     "preview": 3
   }' | jq
 
@@ -433,13 +433,13 @@ curl -X POST "$API_URL/reminders/bulk" \
         "content": "提醒1",
         "schedule_type": "daily",
         "schedule_config": {"time": "08:00"},
-        "timezone": "Asia/Singapore"
+        "timezone": "Asia/Shanghai"
       },
       {
         "content": "提醒2",
         "schedule_type": "daily",
         "schedule_config": {"time": "12:00"},
-        "timezone": "Asia/Singapore"
+        "timezone": "Asia/Shanghai"
       }
     ]
   }' | jq
@@ -541,7 +541,7 @@ class ReminderClient {
         time: '09:00',
         every_n_days: 1,
       },
-      timezone: 'Asia/Singapore',
+      timezone: 'Asia/Shanghai',
       preview: 3,
     });
 
@@ -693,7 +693,7 @@ void main() async {
         'time': '20:00',
         'weekdays': [0, 6], // Sunday and Saturday
       },
-      'timezone': 'Asia/Singapore',
+      'timezone': 'Asia/Shanghai',
       'preview': 4,
     });
 
@@ -837,7 +837,7 @@ const ReminderScreen: React.FC = () => {
         schedule_config: {
           time: '09:00',
         },
-        timezone: 'Asia/Singapore',
+        timezone: 'Asia/Shanghai',
         preview: 3,
       });
       loadReminders();

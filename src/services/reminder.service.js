@@ -8,7 +8,7 @@ import { lunarToSolar } from '../utils/lunar.js';
  * 计算下次触发时间
  * @returns {number} Unix timestamp (seconds) or null
  */
-export function calculateNextTrigger(scheduleType, config, timezone = 'Asia/Singapore') {
+export function calculateNextTrigger(scheduleType, config, timezone = 'Asia/Shanghai') {
 	const now = getCurrentTimestamp();
 
 	switch (scheduleType) {

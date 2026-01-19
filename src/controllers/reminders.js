@@ -376,7 +376,7 @@ export async function bulkCreate(request, env, userId) {
 					schedule_type,
 					JSON.stringify(schedule_config),
 					nextTrigger,
-					timezone || 'Asia/Singapore',
+					timezone || 'Asia/Shanghai',
 					now,
 					now
 				).run();

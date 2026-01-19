@@ -13,7 +13,7 @@ describe('Reminder Service - calculateNextTrigger', () => {
 		const config = {
 			at: '2026-01-03T09:30:00+08:00'
 		};
-		const result = calculateNextTrigger('once', config, 'Asia/Singapore');
+		const result = calculateNextTrigger('once', config, 'Asia/Shanghai');
 		expect(result).toBeGreaterThan(MOCK_NOW);
 	});
 
@@ -21,7 +21,7 @@ describe('Reminder Service - calculateNextTrigger', () => {
 		const config = {
 			at_unix: MOCK_NOW + 3600 // 1 hour later
 		};
-		const result = calculateNextTrigger('once', config, 'Asia/Singapore');
+		const result = calculateNextTrigger('once', config, 'Asia/Shanghai');
 		expect(result).toBe(MOCK_NOW + 3600);
 	});
 
@@ -30,7 +30,7 @@ describe('Reminder Service - calculateNextTrigger', () => {
 			time: '15:00', // 3 PM
 			every_n_days: 1
 		};
-		const result = calculateNextTrigger('daily', config, 'Asia/Singapore', MOCK_NOW);
+		const result = calculateNextTrigger('daily', config, 'Asia/Shanghai', MOCK_NOW);
 		expect(result).toBeGreaterThan(MOCK_NOW);
 	});
 
@@ -39,7 +39,7 @@ describe('Reminder Service - calculateNextTrigger', () => {
 			time: '08:00', // 8 AM (before mock 10 AM)
 			every_n_days: 1
 		};
-		const result = calculateNextTrigger('daily', config, 'Asia/Singapore', MOCK_NOW);
+		const result = calculateNextTrigger('daily', config, 'Asia/Shanghai', MOCK_NOW);
 		expect(result).toBeGreaterThan(MOCK_NOW + 3600); // at least 1 hour later
 	});
 
@@ -50,7 +50,7 @@ describe('Reminder Service - calculateNextTrigger', () => {
 			every_n_weeks: 1
 		};
 		// Friday 10:00 -> next should be Saturday 20:00
-		const result = calculateNextTrigger('weekly', config, 'Asia/Singapore', MOCK_NOW);
+		const result = calculateNextTrigger('weekly', config, 'Asia/Shanghai', MOCK_NOW);
 		expect(result).toBeGreaterThan(MOCK_NOW);
 	});
 
@@ -60,7 +60,7 @@ describe('Reminder Service - calculateNextTrigger', () => {
 			weekdays: [1, 2, 3],
 			end_date: '2026-01-01' // Already passed
 		};
-		const result = calculateNextTrigger('weekly', config, 'Asia/Singapore', MOCK_NOW);
+		const result = calculateNextTrigger('weekly', config, 'Asia/Shanghai', MOCK_NOW);
 		expect(result).toBeNull();
 	});
 
@@ -71,7 +71,7 @@ describe('Reminder Service - calculateNextTrigger', () => {
 			time: '20:00',
 			leapMonth: false
 		};
-		const result = calculateNextTrigger('lunar', config, 'Asia/Singapore', MOCK_NOW);
+		const result = calculateNextTrigger('lunar', config, 'Asia/Shanghai', MOCK_NOW);
 		expect(result).toBeGreaterThan(MOCK_NOW);
 	});
 });
@@ -83,7 +83,7 @@ describe('Reminder Service - generatePreview', () => {
 			time: '09:00',
 			every_n_days: 1
 		};
-		const preview = generatePreview('daily', config, 'Asia/Singapore', 3);
+		const preview = generatePreview('daily', config, 'Asia/Shanghai', 3);
 		expect(preview.length).toBe(3);
 		expect(preview[0].unix).toBeLessThan(preview[1].unix);
 		expect(preview[0].iso).toBeTruthy();
@@ -103,7 +103,7 @@ describe('Reminder Service - generatePreview', () => {
 			weekdays: [1, 3, 5],
 			every_n_weeks: 1
 		};
-		const preview = generatePreview('weekly', config, 'Asia/Singapore', 5);
+		const preview = generatePreview('weekly', config, 'Asia/Shanghai', 5);
 		expect(preview.length).toBeGreaterThan(0);
 		expect(preview.length).toBeLessThanOrEqual(5);
 	});
