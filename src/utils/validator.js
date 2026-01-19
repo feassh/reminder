@@ -14,8 +14,8 @@ export function validateReminderInput(data) {
 		errors.push('content must be less than 1000 characters');
 	}
 
-	if (!data.schedule_type || !['once', 'daily', 'weekly', 'monthly', 'lunar'].includes(data.schedule_type)) {
-		errors.push('schedule_type must be one of: once, daily, weekly, monthly, lunar');
+	if (!data.schedule_type || !['once', 'daily', 'weekly', 'monthly', 'yearly', 'lunar'].includes(data.schedule_type)) {
+		errors.push('schedule_type must be one of: once, daily, weekly, monthly, yearly, lunar');
 	}
 
 	if (!data.schedule_config || typeof data.schedule_config !== 'object') {
@@ -57,8 +57,8 @@ export function validateUpdateInput(data) {
 	}
 
 	if (data.schedule_type !== undefined) {
-		if (!['once', 'daily', 'weekly', 'monthly', 'lunar'].includes(data.schedule_type)) {
-			errors.push('schedule_type must be one of: once, daily, weekly, monthly, lunar');
+		if (!['once', 'daily', 'weekly', 'monthly', 'yearly', 'lunar'].includes(data.schedule_type)) {
+			errors.push('schedule_type must be one of: once, daily, weekly, monthly, yearly, lunar');
 		}
 	}
 
@@ -144,6 +144,24 @@ function validateScheduleConfig(type, config) {
 			}
 			if (config.every_n_months !== undefined && (!Number.isInteger(config.every_n_months) || config.every_n_months < 1)) {
 				errors.push('every_n_months must be a positive integer');
+			}
+			if (config.end_date && !isValidDate(config.end_date)) {
+				errors.push('end_date must be a valid ISO date (YYYY-MM-DD)');
+			}
+			break;
+
+		case 'yearly':
+			if (!config.time || !isValidTime(config.time)) {
+				errors.push('yearly schedule requires "time" in HH:MM format');
+			}
+			if (!config.month || !Number.isInteger(config.month) || config.month < 1 || config.month > 12) {
+				errors.push('yearly schedule requires "month" (1-12)');
+			}
+			if (!config.day || !Number.isInteger(config.day) || config.day < 1 || config.day > 31) {
+				errors.push('yearly schedule requires "day" (1-31)');
+			}
+			if (config.every_n_years !== undefined && (!Number.isInteger(config.every_n_years) || config.every_n_years < 1)) {
+				errors.push('every_n_years must be a positive integer');
 			}
 			if (config.end_date && !isValidDate(config.end_date)) {
 				errors.push('end_date must be a valid ISO date (YYYY-MM-DD)');

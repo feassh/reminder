@@ -20,6 +20,8 @@ export function calculateNextTrigger(scheduleType, config, timezone = 'Asia/Shan
 			return calculateWeekly(config, timezone, now);
 		case 'monthly':
 			return calculateMonthly(config, timezone, now);
+		case 'yearly':
+			return calculateYearly(config, timezone, now);
 		case 'lunar':
 			return calculateLunar(config, timezone, now);
 		default:
@@ -190,6 +192,70 @@ function calculateMonthly(config, timezone, fromTime) {
 }
 
 /**
+ * 每年提醒
+ */
+function calculateYearly(config, timezone, fromTime) {
+	const { time, month, day, every_n_years = 1, end_date } = config;
+
+	if (!time || !month || !day) {
+		throw new Error('yearly schedule requires "time", "month" (1-12), and "day" (1-31)');
+	}
+
+	if (month < 1 || month > 12) {
+		throw new Error('month must be between 1 and 12');
+	}
+
+	if (day < 1 || day > 31) {
+		throw new Error('day must be between 1 and 31');
+	}
+
+	const { hours, minutes } = parseTime(time);
+	const tzOffset = getTimezoneOffset(timezone);
+
+	// 从当前时间开始
+	let current = new Date((fromTime + tzOffset) * 1000);
+	const currentYear = current.getUTCFullYear();
+
+	// 设置为今年的目标日期
+	current.setUTCFullYear(currentYear);
+	current.setUTCMonth(month - 1); // month is 1-based, setUTCMonth is 0-based
+	current.setUTCDate(day);
+	current.setUTCHours(hours, minutes, 0, 0);
+
+	// 处理日期不存在的情况（如2月30日）
+	if (current.getUTCMonth() !== month - 1) {
+		// 设置为该月最后一天
+		current.setUTCMonth(month);
+		current.setUTCDate(0);
+		current.setUTCHours(hours, minutes, 0, 0);
+	}
+
+	let triggerTime = Math.floor(current.getTime() / 1000) - tzOffset;
+
+	// 如果今年的日期已过，推到明年
+	if (triggerTime <= fromTime) {
+		current.setUTCFullYear(currentYear + every_n_years);
+		// 再次处理日期不存在的情况（闰年问题）
+		if (current.getUTCMonth() !== month - 1) {
+			current.setUTCMonth(month);
+			current.setUTCDate(0);
+			current.setUTCHours(hours, minutes, 0, 0);
+		}
+		triggerTime = Math.floor(current.getTime() / 1000) - tzOffset;
+	}
+
+	// 检查结束日期
+	if (end_date) {
+		const endTimestamp = Math.floor(new Date(end_date).getTime() / 1000);
+		if (triggerTime > endTimestamp) {
+			return null;
+		}
+	}
+
+	return triggerTime;
+}
+
+/**
  * 农历提醒
  */
 function calculateLunar(config, timezone, fromTime) {
@@ -290,6 +356,8 @@ export function calculateNextOccurrence(scheduleType, config, timezone, lastTrig
 			return calculateWeekly(config, timezone, fromTime);
 		case 'monthly':
 			return calculateMonthly(config, timezone, fromTime);
+		case 'yearly':
+			return calculateYearly(config, timezone, fromTime);
 		case 'lunar':
 			return calculateLunar(config, timezone, fromTime);
 		default:

@@ -63,7 +63,13 @@
 	- 自动处理月份日期不存在的情况（如2月30日将使用该月最后一天）
 	- 可设置结束日期
 
-5. **lunar（农历提醒）**
+5. **yearly（每年提醒）**
+	- 每年指定月份和日期触发（如每年6月28日）
+	- 支持每隔 N 年触发
+	- 自动处理日期不存在的情况（如闰年2月29日在平年将使用2月28日）
+	- 可设置结束日期
+
+6. **lunar（农历提醒）**
 	- 支持农历日期触发（如农历八月十五）
 	- 支持闰月精确匹配
 	- **支持一次性农历提醒**（`repeat: false`）
@@ -420,7 +426,26 @@ curl -X POST "$API_URL/reminders" \
     "preview": 3
   }' | jq
 
-# 4. 创建农历一次性提醒（今年中秋节）
+# 4. 创建每年提醒（每年6月28日）
+echo -e "\n=== Creating yearly reminder ==="
+curl -X POST "$API_URL/reminders" \
+  -H "Authorization: Bearer $API_TOKEN" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "content": "生日快乐！",
+    "chat_id": "123456789",
+    "schedule_type": "yearly",
+    "schedule_config": {
+      "month": 6,
+      "day": 28,
+      "time": "09:00",
+      "every_n_years": 1
+    },
+    "timezone": "Asia/Shanghai",
+    "preview": 3
+  }' | jq
+
+# 5. 创建农历一次性提醒（今年中秋节）
 echo -e "\n=== Creating lunar once reminder ==="
 curl -X POST "$API_URL/reminders" \
   -H "Authorization: Bearer $API_TOKEN" \
@@ -439,7 +464,7 @@ curl -X POST "$API_URL/reminders" \
     "preview": 1
   }' | jq
 
-# 5. 创建农历重复提醒（每年中秋节）
+# 6. 创建农历重复提醒（每年中秋节）
 echo -e "\n=== Creating lunar repeat reminder ==="
 curl -X POST "$API_URL/reminders" \
   -H "Authorization: Bearer $API_TOKEN" \
@@ -458,18 +483,18 @@ curl -X POST "$API_URL/reminders" \
     "preview": 2
   }' | jq
 
-# 6. 获取提醒列表
+# 7. 获取提醒列表
 echo -e "\n=== Listing reminders ==="
 curl -X GET "$API_URL/reminders?status=active&limit=10&page=1" \
   -H "Authorization: Bearer $API_TOKEN" | jq
 
-# 7. 获取单个提醒
+# 8. 获取单个提醒
 echo -e "\n=== Getting reminder details ==="
 REMINDER_ID=1
 curl -X GET "$API_URL/reminders/$REMINDER_ID" \
   -H "Authorization: Bearer $API_TOKEN" | jq
 
-# 8. 更新提醒
+# 9. 更新提醒
 echo -e "\n=== Updating reminder ==="
 curl -X PUT "$API_URL/reminders/$REMINDER_ID" \
   -H "Authorization: Bearer $API_TOKEN" \
@@ -480,17 +505,17 @@ curl -X PUT "$API_URL/reminders/$REMINDER_ID" \
     "preview": 2
   }' | jq
 
-# 9. 测试触发
+# 10. 测试触发
 echo -e "\n=== Testing trigger ==="
 curl -X POST "$API_URL/reminders/$REMINDER_ID/test-trigger" \
   -H "Authorization: Bearer $API_TOKEN" | jq
 
-# 10. 删除提醒
+# 11. 删除提醒
 echo -e "\n=== Deleting reminder ==="
 curl -X DELETE "$API_URL/reminders/$REMINDER_ID" \
   -H "Authorization: Bearer $API_TOKEN" | jq
 
-# 11. 批量创建
+# 12. 批量创建
 echo -e "\n=== Bulk creating reminders ==="
 curl -X POST "$API_URL/reminders/bulk" \
   -H "Authorization: Bearer $API_TOKEN" \
