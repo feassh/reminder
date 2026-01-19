@@ -865,14 +865,14 @@ export default ReminderScreen;
 
 本实现提供了一个**完整、可部署、生产可用**的 Cloudflare Workers 定时备忘录系统，包括：
 
-✅ 完整的 REST API（CRUD + 预览 + 测试触发）
-✅ 支持 4 种调度类型（once/daily/weekly/lunar）
-✅ Cron 自动触发和 Telegram 通知
-✅ 乐观锁并发控制
-✅ 幂等性支持
-✅ 完整的 OpenAPI 规范
-✅ 单元测试覆盖
-✅ 多语言客户端示例
-✅ 详细的部署文档
+- ✅ 完整的 REST API（CRUD + 预览 + 测试触发）
+- ✅ 支持 4 种调度类型（once/daily/weekly/lunar）
+- ✅ Cron 自动触发和 Telegram 通知
+- ✅ 乐观锁并发控制
+- ✅ 幂等性支持
+- ✅ 完整的 OpenAPI 规范
+- ✅ 单元测试覆盖
+- ✅ 多语言客户端示例
+- ✅ 详细的部署文档
 
 所有代码均可直接在 Cloudflare Workers 环境中部署运行。
